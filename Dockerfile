@@ -40,7 +40,7 @@ RUN tar xfz sixte.tar.gz \
     && cmake --build build \
     && cmake --install build
 
-FROM base as FINAl
+FROM base AS final
 
 LABEL version="${sixte_version}" \
       description="Simulation of X-Ray Telescopes (SIXTE) ${sixte_version} https://www.sternwarte.uni-erlangen.de/sixte/" \
