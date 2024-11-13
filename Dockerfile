@@ -1,7 +1,7 @@
 FROM bojobo/heasoft:6.34 AS base
 
-ARG sixte_version=3.0.2_BETA
-ARG simput_version=2.6.1_BETA
+ARG SIXTE_VERSION=3.0.5
+ARG SIMPUT_VERSION=2.6.3
 
 USER 0
 
@@ -25,25 +25,25 @@ RUN mkdir -p /opt/simput \
 
 FROM base AS sixte_builder
 
-ADD --chown=heasoft:heasoft https://www.sternwarte.uni-erlangen.de/~sixte/downloads/sixte/simput-${simput_version}.tar.gz simput.tar.gz
-ADD --chown=heasoft:heasoft https://www.sternwarte.uni-erlangen.de/~sixte/downloads/sixte/sixte-${sixte_version}.tar.gz sixte.tar.gz
+ADD --chown=heasoft:heasoft https://www.sternwarte.uni-erlangen.de/~sixte/downloads/sixte/simput-${SIMPUT_VERSION}.tar.gz simput.tar.gz
+ADD --chown=heasoft:heasoft https://www.sternwarte.uni-erlangen.de/~sixte/downloads/sixte/sixte-${SIXTE_VERSION}.tar.gz sixte.tar.gz
 
 RUN tar xfz simput.tar.gz \
-    && cd simput/ \
+    && cd simput-${SIMPUT_VERSION} \
     && cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/opt/simput \
     && cmake --build build \
     && cmake --install build
 
 RUN tar xfz sixte.tar.gz \
-    && cd $(ls -d sixte-*/|head -n 1) \
+    && cd sixte-${SIXTE_VERSION} \
     && cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/opt/simput \
     && cmake --build build \
     && cmake --install build
 
 FROM base AS final
 
-LABEL version="${sixte_version}" \
-      description="Simulation of X-Ray Telescopes (SIXTE) ${sixte_version} https://www.sternwarte.uni-erlangen.de/sixte/" \
+LABEL version="${SIXTE_VERSION}" \
+      description="Simulation of X-Ray Telescopes (SIXTE) ${SIXTE_VERSION} https://www.sternwarte.uni-erlangen.de/sixte/" \
       maintainer="Bojan Todorkov"
 
 COPY --from=sixte_builder --chown=heasoft:heasoft /opt/simput /opt/simput
