@@ -1,4 +1,4 @@
-FROM bojobo/heasoft:6.34 AS base
+FROM bojobo/heasoft AS base
 
 ARG SIXTE_VERSION=3.0.5
 ARG SIMPUT_VERSION=2.6.3
@@ -17,6 +17,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get dist-upgrade -y \
         autoconf \
         libtool \
         cmake \
+        git \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
