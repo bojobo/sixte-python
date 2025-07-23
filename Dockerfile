@@ -12,8 +12,6 @@ ADD https://www.sternwarte.uni-erlangen.de/~sixte/downloads/sixte/sixte-${SIXTE_
 
 FROM bojobo/heasoft:${HEASOFT_VERSION} AS base
 
-USER 0
-
 RUN apt-get update && apt-get upgrade -y && apt-get dist-upgrade -y \
     && apt-get install -y --no-install-recommends \
         autoconf \
@@ -29,28 +27,26 @@ RUN apt-get update && apt-get upgrade -y && apt-get dist-upgrade -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /opt/simput \
-    && chown heasoft:heasoft /opt/simput \
-    && mkdir -p /opt/sixte \
-    && chown heasoft:heasoft /opt/sixte
+RUN mkdir -p /home/simput \
+    && mkdir -p /home/sixte
 
 FROM base AS sixte_builder
 
 ARG SIXTE_VERSION
 ARG SIMPUT_VERSION
 
-COPY --from=downloader --chown=heasoft:heasoft ./simput.tar.gz simput.tar.gz
-COPY --from=downloader --chown=heasoft:heasoft ./sixte.tar.gz sixte.tar.gz
+COPY --from=downloader ./simput.tar.gz simput.tar.gz
+COPY --from=downloader ./sixte.tar.gz sixte.tar.gz
 
 RUN tar xfz simput.tar.gz \
     && cd simput-${SIMPUT_VERSION} \
-    && cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/opt/simput \
+    && cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/home/simput \
     && cmake --build build \
     && cmake --install build
 
 RUN tar xfz sixte.tar.gz \
     && cd sixte-${SIXTE_VERSION} \
-    && cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/opt/sixte -DSIMPUT_ROOT=/opt/simput \
+    && cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/home/sixte -DSIMPUT_ROOT=/home/simput \
     && cmake --build build \
     && cmake --install build
 
@@ -62,14 +58,11 @@ LABEL version="${SIXTE_VERSION}" \
       description="Simulation of X-Ray Telescopes (SIXTE) ${SIXTE_VERSION} https://www.sternwarte.uni-erlangen.de/sixte/" \
       maintainer="Bojan Todorkov"
 
-COPY --from=sixte_builder --chown=heasoft:heasoft /opt/simput /opt/simput
-COPY --from=sixte_builder --chown=heasoft:heasoft /opt/sixte /opt/sixte
+COPY --from=sixte_builder /home/simput /home/simput
+COPY --from=sixte_builder /home/sixte /home/sixte
 
-ENV SIMPUT=/opt/simput \
-    SIXTE=/opt/sixte \
-    PATH=/opt/simput/bin:/opt/sixte/bin:${PATH} \
-    PFILES=${PFILES}:/opt/sixte/share/sixte/pfiles:/opt/simput/share/simput/pfiles \
-    LD_LIBRARY_PATH=/opt/simput/lib:${LD_LIBRARY_PATH}
-
-USER heasoft
-WORKDIR /home/heasoft
+ENV SIMPUT=/home/simput \
+    SIXTE=/home/sixte \
+    PATH=/home/simput/bin:/home/sixte/bin:${PATH} \
+    PFILES=${PFILES}:/home/sixte/share/sixte/pfiles:/home/simput/share/simput/pfiles \
+    LD_LIBRARY_PATH=/home/simput/lib:${LD_LIBRARY_PATH}
